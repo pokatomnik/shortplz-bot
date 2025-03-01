@@ -2,6 +2,7 @@ package bot
 
 import (
 	"fmt"
+	"net/url"
 	"strings"
 
 	"github.com/sirupsen/logrus"
@@ -16,23 +17,35 @@ func (bot Bot) Start() {
 	)
 
 	tb.Handle("/start", func(ctx telebot.Context) error {
-		return ctx.Send("Hello!")
+		return ctx.Send(messageWelcome)
+	})
+
+	tb.Handle("/help", func(ctx telebot.Context) error {
+		return ctx.Send(helpStr)
 	})
 
 	tb.Handle(telebot.OnText, func(ctx telebot.Context) error {
-		url := ctx.Message().Text
-		shortInfo := sc.Get(token, url)
-		if shortInfo.IsError() {
-			logrus.Warn(fmt.Sprintf("Failed to get summary for url: %s, error: %v", url, shortInfo.Error().Error()))
-			return ctx.Send(errorSummarizationFailed, &telebot.SendOptions{
-				ReplyTo: ctx.Message(),
-			})
-		} else {
-			linesJoined := strings.Join(shortInfo.MustGet(), "\n")
-			return ctx.Send(linesJoined, &telebot.SendOptions{
+		maybeURLStr := ctx.Message().Text
+
+		_, err := url.ParseRequestURI(maybeURLStr)
+		if err != nil {
+			return ctx.Send(errorNotAnURL, &telebot.SendOptions{
 				ReplyTo: ctx.Message(),
 			})
 		}
+
+		shortInfo := sc.Get(token, maybeURLStr)
+		if shortInfo.IsError() {
+			logrus.Warn(fmt.Sprintf("Failed to get summary for url: %s, error: %v", maybeURLStr, shortInfo.Error().Error()))
+			return ctx.Send(errorSummarizationFailed, &telebot.SendOptions{
+				ReplyTo: ctx.Message(),
+			})
+		}
+
+		linesJoined := strings.Join(shortInfo.MustGet(), "\n")
+		return ctx.Send(linesJoined, &telebot.SendOptions{
+			ReplyTo: ctx.Message(),
+		})
 	})
 
 	tb.Start()
