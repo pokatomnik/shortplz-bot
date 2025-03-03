@@ -8,6 +8,8 @@ GO=go
 
 LDFLAGS=-ldflags "-s -w"
 
+TRIMPATH=-trimpath
+
 all: build
 
 build:
