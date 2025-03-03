@@ -1,17 +1,27 @@
 package users
 
 import (
-	userpkg "github.com/pokatomnik/shortplz-bot/entities/user"
+	"errors"
+	"strconv"
+
+	"github.com/pokatomnik/shortplz-bot/entities/user"
 	"github.com/samber/mo"
+	"go.mills.io/bitcask/v2"
 )
 
-func (users Users) GetUserOrCreate(userId int64) mo.Result[userpkg.User] {
-	var user userpkg.User
-	result := users.db.Where(&userpkg.User{TelegramUserID: userId}).FirstOrCreate(&user)
+func (users Users) GetUser(userId int64) mo.Result[user.User] {
+	db, err := bitcask.Open(users.dbName)
+	if err != nil {
+		return mo.Err[user.User](errors.New(errorOpenDatabase))
+	}
+	defer db.Close()
 
-	if result.Error != nil {
-		return mo.Err[userpkg.User](result.Error)
+	v, err := db.Get(bitcask.Key(strconv.Itoa(int(userId))))
+	if err != nil {
+		return mo.Err[user.User](err)
 	}
 
-	return mo.Ok(user)
+	token := string(v)
+
+	return mo.Ok(user.User{TelegramUserID: userId, APIToken: token})
 }

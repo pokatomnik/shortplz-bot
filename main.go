@@ -3,12 +3,13 @@ package main
 import (
 	"fmt"
 
+	"github.com/pokatomnik/shortplz-bot/features/apiclient"
 	"github.com/pokatomnik/shortplz-bot/features/bot"
 	"github.com/pokatomnik/shortplz-bot/features/env"
+	"github.com/pokatomnik/shortplz-bot/features/shortclient"
 	"github.com/pokatomnik/shortplz-bot/features/summary"
 	"github.com/pokatomnik/shortplz-bot/features/users"
 	"github.com/sirupsen/logrus"
-	"gorm.io/driver/sqlite"
 )
 
 const (
@@ -29,20 +30,16 @@ func main() {
 		return
 	}
 
-	summaryClient := summary.New()
-	users := users.Open(
-		sqlite.Open(dbFName.OrElse("data.db")),
-	)
+	apiClient := apiclient.New()
+	shortClient := shortclient.New()
+	summaryClient := summary.New(apiClient, shortClient)
 
-	if users.IsError() {
-		logrus.Error(errorFailedOpenDB)
-		return
-	}
+	users := users.New(dbFName.OrElse("data.db"))
 
-	bot := bot.New(botToken.MustGet(), summaryClient, users.MustGet())
+	bot := bot.New(botToken.MustGet(), summaryClient, users)
 
 	if bot.IsError() {
-		logrus.Error(fmt.Sprintf("%s: %v", errorBotStartFailedBase, bot.Error()))
+		logrus.Error(fmt.Sprintf("%s: %v", errorBotStartFailedBase, bot.Error().Error()))
 		return
 	}
 

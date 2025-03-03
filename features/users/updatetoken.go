@@ -1,16 +1,23 @@
 package users
 
 import (
-	userpkg "github.com/pokatomnik/shortplz-bot/entities/user"
+	"strconv"
+
 	"github.com/samber/mo"
+	"go.mills.io/bitcask/v2"
 )
 
 func (users Users) UpdateToken(userId int64, token string) mo.Result[struct{}] {
-	result := users.db.
-		Where(&userpkg.User{TelegramUserID: userId}).
-		Updates(&userpkg.User{APIToken: token})
-	if result.Error != nil {
-		return mo.Err[struct{}](result.Error)
+	db, err := bitcask.Open(users.dbName)
+	if err != nil {
+		return mo.Err[struct{}](err)
 	}
+	defer db.Close()
+
+	putErr := db.Put(bitcask.Key(strconv.Itoa(int(userId))), []byte(token))
+	if putErr != nil {
+		return mo.Err[struct{}](putErr)
+	}
+
 	return mo.Ok(struct{}{})
 }

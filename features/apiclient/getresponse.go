@@ -10,7 +10,7 @@ import (
 	"github.com/samber/mo"
 )
 
-func (client *YandexAPIClient) GetShortResponseURL(token string, articleURL string) mo.Result[string] {
+func (client YandexAPIClient) GetShortResponseURL(token string, articleURL string) mo.Result[string] {
 	_, err := url.ParseRequestURI(articleURL)
 	if err != nil {
 		return mo.Err[string](errors.New(errorParseIncomingURL))

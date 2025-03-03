@@ -31,7 +31,7 @@ func (bot Bot) Start() {
 		words := strings.Fields(text)
 
 		if len(words) < 2 {
-			token := users.GetUserOrCreate(userId).OrElse(user.User{}).APIToken
+			token := users.GetUser(userId).OrElse(user.User{}).APIToken
 			if token == "" {
 				token = emptyTokenCaption
 			}
@@ -64,7 +64,7 @@ func (bot Bot) Start() {
 		}
 
 		userId := ctx.Sender().ID
-		user := users.GetUserOrCreate(userId)
+		user := users.GetUser(userId)
 		if user.IsError() {
 			return ctx.Send(errorFailedGetUser)
 		}
