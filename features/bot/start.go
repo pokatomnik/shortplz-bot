@@ -2,9 +2,9 @@ package bot
 
 import (
 	"fmt"
-	"net/url"
 	"strings"
 
+	"github.com/mvdan/xurls"
 	"github.com/pokatomnik/shortplz-bot/entities/user"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/telebot.v4"
@@ -54,38 +54,69 @@ func (bot Bot) Start() {
 	})
 
 	tb.Handle(telebot.OnText, func(ctx telebot.Context) error {
-		maybeURLStr := ctx.Message().Text
+		text := ctx.Message().Text
 
-		_, err := url.ParseRequestURI(maybeURLStr)
-		if err != nil {
+		urls := xurls.Strict.FindAllString(text, -1)
+		if urls == nil {
+			// FindAllString may return nil when no matches
+			urls = []string{}
+		}
+
+		if len(urls) == 0 {
 			return ctx.Send(errorNotAnURL, &telebot.SendOptions{
 				ReplyTo: ctx.Message(),
 			})
 		}
 
-		userId := ctx.Sender().ID
-		user := users.GetUser(userId)
-		if user.IsError() {
-			return ctx.Send(errorFailedGetUser)
-		}
+		if len(urls) == 1 {
+			first := urls[0]
+			userId := ctx.Sender().ID
+			user := users.GetUser(userId)
+			if user.IsError() {
+				return ctx.Send(errorFailedGetUser)
+			}
 
-		apiToken := user.MustGet().APIToken
-		if apiToken == "" {
-			return ctx.Send(messageNoToken)
-		}
+			apiToken := user.MustGet().APIToken
+			if apiToken == "" {
+				return ctx.Send(messageNoToken)
+			}
 
-		shortInfo := sc.Get(apiToken, maybeURLStr)
-		if shortInfo.IsError() {
-			logrus.Warn(fmt.Sprintf("Failed to get summary for url: %s, error: %v", maybeURLStr, shortInfo.Error().Error()))
-			return ctx.Send(errorSummarizationFailed, &telebot.SendOptions{
+			shortInfo := sc.Get(apiToken, first)
+			if shortInfo.IsError() {
+				logrus.Warn(fmt.Sprintf("Failed to get summary for url: %s, error: %v", first, shortInfo.Error().Error()))
+				return ctx.Send(errorSummarizationFailed, &telebot.SendOptions{
+					ReplyTo: ctx.Message(),
+				})
+			}
+
+			linesJoined := strings.Join(shortInfo.MustGet(), "\n")
+			return ctx.Send(linesJoined, &telebot.SendOptions{
 				ReplyTo: ctx.Message(),
 			})
 		}
 
-		linesJoined := strings.Join(shortInfo.MustGet(), "\n")
-		return ctx.Send(linesJoined, &telebot.SendOptions{
-			ReplyTo: ctx.Message(),
+		inlineKeys := make([][]telebot.InlineButton, 0, len(urls))
+		for _, url := range urls {
+			inlineKeys = append(inlineKeys, []telebot.InlineButton{
+				{Unique: "URL", Text: url, Data: url},
+			})
+		}
+
+		return ctx.Send("Выберите ссылку:", &telebot.ReplyMarkup{
+			InlineKeyboard: inlineKeys,
 		})
+		// return ctx.Send("Выберите ссылку:", &telebot.SendOptions{
+		// 	ReplyParams: {
+		// 		inlineKeys: inlineKeys,
+		// 	},
+		// 	ReplyTo: ctx.Message(),
+		// })
+	})
+
+	tb.Handle(&telebot.InlineButton{Unique: "URL"}, func(ctx telebot.Context) error {
+		data := ctx.Data()
+		fmt.Println(data)
+		return ctx.Send("Button pressed")
 	})
 
 	tb.Start()
