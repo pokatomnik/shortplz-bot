@@ -1,19 +1,27 @@
 package bot
 
 import (
-	"github.com/pokatomnik/shortplz-bot/features/summary"
-	userspkg "github.com/pokatomnik/shortplz-bot/features/users"
+	"github.com/pokatomnik/shortplz-bot/entities/user"
 	"github.com/samber/mo"
 	"gopkg.in/telebot.v4"
 )
 
-type Bot struct {
-	telebot       *telebot.Bot
-	summaryClient summary.SummaryClient
-	users         userspkg.Users
+type SummaryClient interface {
+	Get(token string, url string) mo.Result[[]string]
 }
 
-func New(token string, summaryClient summary.SummaryClient, users userspkg.Users) mo.Result[Bot] {
+type UsersRepository interface {
+	GetUser(userId int64) mo.Result[user.User]
+	UpdateToken(userId int64, token string) mo.Result[struct{}]
+}
+
+type Bot struct {
+	telebot       *telebot.Bot
+	summaryClient SummaryClient
+	users         UsersRepository
+}
+
+func New(token string, summaryClient SummaryClient, users UsersRepository) mo.Result[Bot] {
 	botPrefs := telebot.Settings{Token: token}
 	telebot, err := telebot.NewBot(botPrefs)
 	if err != nil {

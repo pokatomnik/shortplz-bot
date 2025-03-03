@@ -1,18 +1,23 @@
 package summary
 
-import (
-	"github.com/pokatomnik/shortplz-bot/features/apiclient"
-	"github.com/pokatomnik/shortplz-bot/features/shortclient"
-)
+import "github.com/samber/mo"
 
-type SummaryClient struct {
-	apiClient   apiclient.YandexAPIClient
-	shortClient shortclient.HTMLClient
+type ApiClient interface {
+	GetShortResponseURL(token string, articleURL string) mo.Result[string]
 }
 
-func New() SummaryClient {
+type ShortClient interface {
+	Get(url string) mo.Result[[]string]
+}
+
+type SummaryClient struct {
+	apiClient   ApiClient
+	shortClient ShortClient
+}
+
+func New(apiClient ApiClient, shortClient ShortClient) SummaryClient {
 	return SummaryClient{
-		apiClient:   apiclient.New(),
-		shortClient: shortclient.New(),
+		apiClient:   apiClient,
+		shortClient: shortClient,
 	}
 }
