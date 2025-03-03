@@ -15,7 +15,7 @@ all: build
 build:
 	@echo "Building for $(PLATFORM)..."
 	@mkdir -p $(BUILD_DIR)
-	@if [ "$(PLATFORM)" = "win32" ]; then \
+	@if [ "$(PLATFORM)" = "win64" ]; then \
 		GOOS=windows GOARCH=amd64 $(GO) build ${TRIMPATH} $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME).exe .; \
 	elif [ "$(PLATFORM)" = "linux" ]; then \
 		GOOS=linux GOARCH=amd64 $(GO) build ${TRIMPATH} $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME) .; \
