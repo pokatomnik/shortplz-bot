@@ -1,6 +1,6 @@
 package env
 
 const (
-	botTokenEnvKey = "BOT_TOKEN"
-	apiTokenEnvKey = "API_TOKEN"
+	botTokenEnvKey   = "BOT_TOKEN"
+	dbFileNameEnvKey = "DB_NAME"
 )

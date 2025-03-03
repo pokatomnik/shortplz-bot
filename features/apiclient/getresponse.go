@@ -11,7 +11,7 @@ import (
 )
 
 func (client *YandexAPIClient) GetShortResponseURL(token string, articleURL string) mo.Result[string] {
-	_, err := url.Parse(articleURL)
+	_, err := url.ParseRequestURI(articleURL)
 	if err != nil {
 		return mo.Err[string](errors.New(errorParseIncomingURL))
 	}

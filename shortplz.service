@@ -1,0 +1,16 @@
+[Unit]
+Description=ShortPlzBot
+After=network.target
+
+[Service]
+Type=simple
+User=run_as_user
+WorkingDirectory=/path/to/working/directory
+ExecStart=/path/to/binary
+Environment="BOT_TOKEN=YOUR_BOT_TOKEN"
+StandardOutput=file:/path/to/log/log.log
+StandardError=file:/path/to/log/error.log
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
