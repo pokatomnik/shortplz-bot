@@ -1,6 +1,6 @@
 package user
 
 type User struct {
-	TelegramUserID int64 `gorm:"uniqueIndex"`
+	TelegramUserID int64
 	APIToken       string
 }
