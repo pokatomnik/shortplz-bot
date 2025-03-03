@@ -36,7 +36,7 @@ func (bot Bot) Start() {
 				token = emptyTokenCaption
 			}
 
-			return ctx.Send(fmt.Sprintf("%s%s", messageDisplayTokenPrefix, token), &telebot.SendOptions{
+			return ctx.Send(fmt.Sprintf("%s\"%s\"", messageDisplayTokenPrefix, token), &telebot.SendOptions{
 				ReplyTo: ctx.Message(),
 			})
 		}

@@ -18,7 +18,11 @@ func (users Users) GetUser(userId int64) mo.Result[user.User] {
 
 	v, err := db.Get(bitcask.Key(strconv.Itoa(int(userId))))
 	if err != nil {
-		return mo.Err[user.User](err)
+		if errors.Is(err, bitcask.ErrKeyNotFound) {
+			return mo.Ok(user.User{TelegramUserID: userId})
+		} else {
+			return mo.Err[user.User](err)
+		}
 	}
 
 	token := string(v)
