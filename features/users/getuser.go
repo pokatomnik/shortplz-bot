@@ -9,14 +9,8 @@ import (
 	"go.mills.io/bitcask/v2"
 )
 
-func (users Users) GetUser(userId int64) mo.Result[user.User] {
-	db, err := bitcask.Open(users.dbName)
-	if err != nil {
-		return mo.Err[user.User](errors.New(errorOpenDatabase))
-	}
-	defer db.Close()
-
-	v, err := db.Get(bitcask.Key(strconv.Itoa(int(userId))))
+func (users *Users) GetUser(userId int64) mo.Result[user.User] {
+	v, err := users.db.Get(bitcask.Key(strconv.Itoa(int(userId))))
 	if err != nil {
 		if errors.Is(err, bitcask.ErrKeyNotFound) {
 			return mo.Ok(user.User{TelegramUserID: userId})

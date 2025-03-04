@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/mvdan/xurls"
+	"gopkg.in/telebot.v4"
 )
 
 const (
@@ -20,7 +21,7 @@ func normalizeUrl(url string) string {
 	return fmt.Sprintf("%s%s", https, url)
 }
 
-func extract(text string) []string {
+func fromText(text string) []string {
 	urls := xurls.Relaxed.FindAllString(text, -1)
 	if urls == nil {
 		// FindAllString may return nil when no matches
@@ -30,4 +31,52 @@ func extract(text string) []string {
 		urls[i] = normalizeUrl(urls[i])
 	}
 	return urls
+}
+
+func fromEnts(ents telebot.Entities) []string {
+	res := make([]string, 0, len(ents))
+	for _, e := range ents {
+		url := strings.TrimSpace(e.URL)
+		if url != "" {
+			res = append(res, normalizeUrl(e.URL))
+		}
+	}
+	return res
+}
+
+func extractUrlsFromMessage(msg *telebot.Message) []string {
+	var (
+		text = strings.TrimSpace(msg.Text)
+		capt = strings.TrimSpace(msg.Caption)
+		ents = msg.CaptionEntities
+	)
+
+	turls := fromText(text)
+	curls := fromText(capt)
+	eurls := fromEnts(ents)
+
+	res := make([]string, 0, len(turls)+len(curls)+len(eurls))
+
+	added := make(map[string]struct{})
+
+	for _, u := range turls {
+		if _, ok := added[u]; !ok {
+			res = append(res, u)
+			added[u] = struct{}{}
+		}
+	}
+	for _, u := range curls {
+		if _, ok := added[u]; !ok {
+			res = append(res, u)
+			added[u] = struct{}{}
+		}
+	}
+	for _, u := range eurls {
+		if _, ok := added[u]; !ok {
+			res = append(res, u)
+			added[u] = struct{}{}
+		}
+	}
+
+	return res
 }

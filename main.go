@@ -34,9 +34,14 @@ func main() {
 	shortClient := shortclient.New()
 	summaryClient := summary.New(apiClient, shortClient)
 
-	users := users.New(dbFName.OrElse("data.db"))
+	users := users.Open(dbFName.OrElse("data.db"))
+	if users.IsError() {
+		logrus.Error(errorFailedOpenDB)
+		return
+	}
+	defer users.MustGet().Close()
 
-	bot := bot.New(botToken.MustGet(), summaryClient, users)
+	bot := bot.New(botToken.MustGet(), summaryClient, users.MustGet())
 
 	if bot.IsError() {
 		logrus.Error(fmt.Sprintf("%s: %v", errorBotStartFailedBase, bot.Error().Error()))
