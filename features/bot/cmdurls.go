@@ -1,7 +1,7 @@
 package bot
 
 import (
-	"strings"
+	"errors"
 
 	"gopkg.in/telebot.v4"
 )
@@ -10,35 +10,32 @@ func (bot Bot) cmdURLsSetup() {
 	tb := bot.telebot
 
 	var inTxtHandler = func(ctx telebot.Context) error {
-		var (
-			message       = ctx.Message()
-			caption       = message.Caption
-			text          = message.Text
-			actualCaption = strings.TrimSpace(caption)
-			actualText    = strings.TrimSpace(text)
-			userText      = ""
-		)
-		if actualText != "" {
-			userText = actualText
-		} else if actualCaption != "" {
-			userText = actualCaption
-		}
-
-		urls := extract(userText)
+		urls := extractUrlsFromMessage(ctx.Message())
 
 		if len(urls) == 0 {
 			return bot.respondZero(ctx)
 		}
 
-		if len(urls) == 1 {
-			first := urls[0]
-			return bot.respondSingle(ctx, first)
-		}
-
-		return bot.respondMulti(ctx, urls)
+		first := urls[0]
+		return bot.respondSingle(ctx, first)
 	}
 
-	tb.Handle(telebot.OnForward, inTxtHandler)
+	// Some additional checks are required here.
+	// ctx.Message().IsForwarded() should be invoked
+	// to let us know if the message was forwarded
+	// to enable one of two handlers,
+	// because sometimes both are triggered
+	tb.Handle(telebot.OnForward, func(ctx telebot.Context) error {
+		if ctx.Message().IsForwarded() {
+			return inTxtHandler(ctx)
+		}
+		return errors.New("telebot bug")
+	})
 
-	tb.Handle(telebot.OnText, inTxtHandler)
+	tb.Handle(telebot.OnText, func(ctx telebot.Context) error {
+		if ctx.Message().IsForwarded() {
+			return errors.New("telebot bug")
+		}
+		return inTxtHandler(ctx)
+	})
 }
