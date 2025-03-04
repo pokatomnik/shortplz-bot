@@ -7,6 +7,7 @@ toolchain go1.23.4
 require (
 	github.com/PuerkitoBio/goquery v1.10.2
 	github.com/joho/godotenv v1.5.1
+	github.com/mvdan/xurls v1.1.0
 	github.com/samber/mo v1.13.0
 	github.com/sirupsen/logrus v1.9.3
 	go.mills.io/bitcask/v2 v2.1.2
