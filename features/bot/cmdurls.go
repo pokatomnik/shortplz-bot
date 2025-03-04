@@ -18,7 +18,7 @@ func (bot Bot) cmdURLsSetup() {
 
 		if len(urls) == 1 {
 			first := urls[0]
-			bot.respondSingle(ctx, first)
+			return bot.respondSingle(ctx, first)
 		}
 
 		return bot.respondMulti(ctx, urls)
